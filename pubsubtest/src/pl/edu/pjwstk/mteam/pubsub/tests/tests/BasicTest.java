@@ -1,0 +1,170 @@
+package pl.edu.pjwstk.mteam.pubsub.tests.tests;
+
+import pl.edu.pjwstk.mteam.pubsub.tests.events.EventManager;
+import pl.edu.pjwstk.mteam.pubsub.tests.events.IEventSubscriber;
+import pl.edu.pjwstk.mteam.pubsub.tests.psnode.PSNode;
+import pl.edu.pjwstk.mteam.pubsub.tests.tests.rules.BasicTestRules;
+
+import java.util.Map;
+import org.apache.log4j.Logger;
+import pl.edu.pjwstk.mteam.pubsub.tests.tests.rules.FieldRule;
+
+public class BasicTest extends Thread implements ITest, IEventSubscriber {
+
+    public static final Logger LOG = Logger.getLogger(BasicTest.class);
+
+    private static final BasicTestRules rules = new BasicTestRules();
+    private static final String[] acceptedEvents = {PSNode.EVENT_ONJOIN,PSNode.EVENT_ONTOPICCREATE,PSNode.EVENT_ONTOPICSUBSCRIBE,
+            PSNode.EVENT_ONPUBSUBERROR, PSNode.EVENT_ONTOPICNOTIFY, PSNode.EVENT_ONDELIVER};
+
+    private Map<String,Object> kwargs;
+
+    private PSNode psNode;
+    private TestState testState = TestState.UNCONNECTED;
+
+    public BasicTest(Map<String,Object> kwargs) {
+        setName("BasicTest");
+        this.kwargs = kwargs;
+        for (String acceptedEvent : acceptedEvents) {
+            EventManager.getInstance().subscribe(acceptedEvent, this);
+        }
+    }
+
+    private boolean verifyKwargs() {
+
+        Map<String,FieldRule> fieldRules = rules.getFieldsRules();
+        for (FieldRule fr : fieldRules.values()) {
+            String fieldName = fr.getFieldName();
+            Object kwargValue = kwargs.get(fieldName);
+            if (kwargValue == null) {
+                StringBuilder strb = new StringBuilder("BasicTest must be given a \"");
+                strb.append(fieldName).append("\" kwarg.");
+                if (LOG.isDebugEnabled()) {
+                    strb.append(" Required kwargs: ").append(fieldRules.values());
+                }
+                LOG.error(strb.toString());
+                return false;
+            }
+            if (!rules.verifyField(fieldName, kwargValue)) {
+                return false;
+            }
+
+        }
+
+        return true;
+    }
+
+    public boolean test() {
+
+        if (!verifyKwargs()) {
+            LOG.error("BasicTest cannot run with given arguments: " + this.kwargs);
+            return false;
+        }
+
+        Integer nodeNumber = (Integer) this.kwargs.get("nodeNumber");
+        Integer port = (Integer) this.kwargs.get("port");
+        String bootIP = (String) this.kwargs.get("bootIP");
+        Integer bootPort = (Integer) this.kwargs.get("bootPort");
+        String serverReflexiveIP = (String) this.kwargs.get("serverReflexiveIP");
+        Integer serverReflexivePort = (Integer) this.kwargs.get("serverReflexivePort");
+
+        // Creating PSNode
+        this.psNode = new PSNode("node" + nodeNumber, port, bootIP, bootPort, serverReflexiveIP, serverReflexivePort);
+        this.psNode.init();
+
+        snooze(10000*nodeNumber);
+
+        this.psNode.networkJoin();
+        // See handleEvent()
+
+        for (int i=0; this.testState != TestState.SUBSCRIBED && i<5; i++) {
+            if (i == 5) {
+                LOG.error("PSNode haven't subscribe despite waiting. Quitting.");
+                return false;
+            }
+            snooze(1000);
+        }
+
+        this.psNode.publish("topicID", ("Message from node #" + nodeNumber).getBytes());
+
+        return true;
+    }
+
+    public synchronized void handleEvent(String eventType, Object eventData) {
+
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Handling event type=" + eventType + " data=" + eventData);
+        }
+
+        if (PSNode.EVENT_ONJOIN.equals(eventType)) {
+
+            this.testState = TestState.JOINED;
+            this.psNode.subscribe("topicID", -1);
+
+        } else if (PSNode.EVENT_ONTOPICCREATE.equals(eventType)) {
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Created topic " + eventData);
+            }
+
+            this.testState = TestState.CREATEDTOPIC;
+
+        } else if (PSNode.EVENT_ONTOPICSUBSCRIBE.equals(eventType)) {
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Subscribed to topic " + eventData);
+            }
+
+            this.testState = TestState.SUBSCRIBED;
+
+        } else if (PSNode.EVENT_ONPUBSUBERROR.equals(eventType)) {
+
+            Object[] eventDataArr = (Object[]) eventData;
+            Object topicID = eventDataArr[0];
+            Byte operationType = (Byte) eventDataArr[1];
+            Integer errorCode = (Integer) eventDataArr[2];
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Error " + errorCode + " while " + operationType + " for id=" + topicID);
+            }
+
+            switch (this.testState) {
+                case JOINED:
+                    if (operationType == 2 && errorCode == 5) {
+                        this.psNode.createTopic("topicID", true);
+                    }
+                    break;
+            }
+
+        } else if (PSNode.EVENT_ONTOPICNOTIFY.equals(eventType)) {
+
+            Object[] eventDataArr = (Object[]) eventData;
+            Object topicID = eventDataArr[0];
+            byte[] message = (byte[]) eventDataArr[1];
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("New event in topic " + topicID + ": " + new String(message));
+            }
+
+        }
+
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Test state after handling event: " + this.testState);
+        }
+
+    }
+
+    private void snooze(long t) {
+        if (t <= 0) return;
+        try{
+            sleep(t);
+        } catch (Throwable e) {
+            LOG.error("Error while sleeping...", e);
+        }
+    }
+
+}
+
+enum TestState {
+    UNCONNECTED, JOINED, CREATEDTOPIC, SUBSCRIBED
+}
