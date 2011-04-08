@@ -22,7 +22,7 @@ public class PSNodeCallback implements NodeCallback {
     }
 
     public void onJoin(Node node) {
-        LOG.info("OnJoin invoked.....");
+        LOG.info(node.getUserName() + ": OnJoin invoked.....");
         EventManager.getInstance().addEventToQueue(PSNode.EVENT_ONJOIN, null);
     }
 
@@ -36,12 +36,12 @@ public class PSNodeCallback implements NodeCallback {
     }
 
     public void onTopicCreate(Node node, Object topicID) {
-        LOG.info("onTopicCreate for topic '" + topicID + "' callback invoked");
+        LOG.info(node.getUserName() + ": onTopicCreate for topic '" + topicID + "' callback invoked");
         EventManager.getInstance().addEventToQueue(PSNode.EVENT_ONTOPICCREATE, topicID);
     }
 
     public void onTopicSubscribe(Node node, Object topicID) {
-        LOG.info("onTopicSubscribe for topic '" + topicID + "' callback invoked");
+        LOG.info(node.getUserName() + ": onTopicSubscribe for topic '" + topicID + "' callback invoked");
         EventManager.getInstance().addEventToQueue(PSNode.EVENT_ONTOPICSUBSCRIBE, topicID);
     }
 
@@ -50,7 +50,7 @@ public class PSNodeCallback implements NodeCallback {
     }
 
     public void onPubSubError(Node node, Object topicID, byte operationType, int errorCode) {
-        LOG.info("OnPubSubError for topic '" + topicID + "' callback invoked (" + topicID + ", " + operationType + ", " + errorCode + ")");
+        LOG.info(node.getUserName() + ": OnPubSubError for topic '" + topicID + "' callback invoked (" + topicID + ", " + operationType + ", " + errorCode + ")");
         EventManager.getInstance().addEventToQueue(PSNode.EVENT_ONPUBSUBERROR, new Object[]{topicID, operationType, errorCode});
     }
 

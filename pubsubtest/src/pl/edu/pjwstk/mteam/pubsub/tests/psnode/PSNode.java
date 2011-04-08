@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 import pl.edu.pjwstk.mteam.core.NetworkObject;
 import pl.edu.pjwstk.mteam.core.Node;
 import pl.edu.pjwstk.mteam.core.NodeInfo;
+import pl.edu.pjwstk.mteam.core.PubSubInterface;
 import pl.edu.pjwstk.mteam.p2p.P2PNode;
 import pl.edu.pjwstk.mteam.p2p.P2PNode.RoutingAlgorithm;
 import pl.edu.pjwstk.mteam.pubsub.accesscontrol.AccessControlRules;
@@ -38,6 +39,7 @@ public class PSNode {
     private Topic topic;
     private AccessControlRules accessControlRules;
     private InterestConditions interestConditions;
+    private CoreAlgorithm coreAlgorithm;
 
     public PSNode(String userId, int port, String bootIP, int bootPort, String serverReflexiveIP, int serverReflexivePort) {
         this.userId = userId;
@@ -48,12 +50,15 @@ public class PSNode {
         this.serverReflexivePort = serverReflexivePort;
     }
 
+    public String getUserId() {
+        return this.userId;
+    }
+
     public void init() {
 
         this.topic = new Topic("", new NodeInfo(this.userId));
         this.accessControlRules = new AccessControlRules(this.topic);
         this.interestConditions = new InterestConditions(this.topic);
-
 
         this.p2pNode = new P2PNode(new PSNodeCallback(), /*RoutingAlgorithm.KADEMLIA*/RoutingAlgorithm.SUPERPEER);
 
@@ -67,7 +72,7 @@ public class PSNode {
 
         //p.setTcpPort(P2PPTest.port);
         //The line below is only needed by pub-sub
-        new CoreAlgorithm(this.p2pNode.getTcpPort() + 1, this.p2pNode);
+        this.coreAlgorithm = new CoreAlgorithm(this.p2pNode.getTcpPort() + 1, this.p2pNode);
         this.p2pNode.setBootIP(this.bootIP);
         this.p2pNode.setBootPort(this.bootPort);
 
@@ -75,6 +80,10 @@ public class PSNode {
             LOG.trace("Creating peer " + this.p2pNode.getUserName() + ":" + this.p2pNode.getTcpPort());
         }
 
+    }
+
+    public boolean isInitiaded() {
+        return this.p2pNode != null;
     }
 
     public void insertObject(String key, byte[] value) {
@@ -92,6 +101,11 @@ public class PSNode {
     }
 
     public void networkJoin() {
+        if (LOG.isDebugEnabled()) LOG.debug("Joining network");
+        if (!isInitiaded()) {
+            LOG.warn("Could not join network: PSNode is not initiated");
+            return;
+        }
         this.p2pNode.networkJoin();
     }
 
@@ -106,23 +120,43 @@ public class PSNode {
 
     public void createTopic(String topicId, boolean subscribeFlag) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Creating topic '" + topicId + "' (subscribe=" + subscribeFlag + ")");
+            LOG.debug(this.userId + ": Creating topic '" + topicId + "' (subscribe=" + subscribeFlag + ")");
+        }
+        if (!isInitiaded()) {
+            LOG.warn(this.userId + ": Could not create topic: PSNode is not initiated");
+            return;
         }
         this.p2pNode.getPubSubInterface().createTopic(topicId, subscribeFlag, this.accessControlRules);
     }
 
     public void publish(String topicId, byte[] message) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Publishing event for '" + topicId + "': " + new String(message));
+            LOG.debug(this.userId + ": Publishing event for '" + topicId + "': " + new String(message));
+        }
+        if (!isInitiaded()) {
+            LOG.warn(this.userId + ": Could not publish resource: PSNode is not initiated");
+            return;
         }
         this.p2pNode.getPubSubInterface().networkPublish(topicId, message);
     }
 
     public void subscribe(String topicId, int eventIndex) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Subscribing for '" + topicId + "' (eventIndex=" + eventIndex + ")");
+            LOG.debug(this.userId + ": Subscribing for '" + topicId + "' (eventIndex=" + eventIndex + ")");
         }
-        this.p2pNode.getPubSubInterface().networkSubscribe(topicId, this.interestConditions, eventIndex);
+
+        if (!isInitiaded()) {
+            LOG.warn(this.userId + ": Could not subscribe: PSNode is not initiated");
+            return;
+        }
+
+        PubSubInterface psInterface = this.p2pNode.getPubSubInterface();
+        if (psInterface == null) {
+            LOG.warn(this.userId + ": Could not subscribe: P2PNode returned null PubSubInterface");
+            return;
+        }
+
+        psInterface.networkSubscribe(topicId, this.interestConditions, eventIndex);
     }
 
     public void unsubscribe(String topicId) {
