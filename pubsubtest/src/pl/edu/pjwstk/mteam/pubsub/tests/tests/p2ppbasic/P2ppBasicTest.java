@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.net.BindException;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 public class P2ppBasicTest extends Thread implements ITest, IEventSubscriber {
 
@@ -118,78 +117,76 @@ public class P2ppBasicTest extends Thread implements ITest, IEventSubscriber {
     public synchronized void handleEvent(String eventType, Object eventData) {
         try {
 
-        if (LOG.isTraceEnabled()) {
-            LOG.trace(this.nodeNumber + ": Handling event type=" + eventType + " data=" + eventData);
-        }
-
-
-        if (P2ppNode.EVENT_ONJOIN.equals(eventType)) {
-
-            this.testState = TestState.JOINED;
-
-            String key = "node"+this.nodeNumber+"_key";
-            String value = "node"+this.nodeNumber+"_value";
-            this.peer.publish(key.getBytes(), new StringValueResourceObject(key, value));
-
-        } else if (P2ppNode.EVENT_ONPUBLISH.equals(eventType)) {
-
-            this.testState = TestState.PUBLISHED;
-
-            Object[] eventDataArr = (Object[]) eventData;
-            Byte contentType = (Byte) eventDataArr[0];
-            Byte contentSubType = (Byte) eventDataArr[1];
-            String resourceKey = new String((byte[])eventDataArr[2]);
             if (LOG.isTraceEnabled()) {
-                LOG.trace("onpublish: contentType=" + contentType + " contentSubType=" + contentSubType + " key=" + resourceKey);
+                LOG.trace(this.nodeNumber + ": Handling event type=" + eventType + " data=" + eventData);
             }
 
-            String key = "node"+this.nodeNumber+"_key";
-            this.peer.lookup(P2PPUtils.STRING_VALUE_CONTENT_TYPE, (byte)0, key.getBytes(), null);
 
+            if (P2ppNode.EVENT_ONJOIN.equals(eventType)) {
 
-        } else if (P2ppNode.EVENT_ONLOOKUP.equals(eventType)) {
+                this.testState = TestState.JOINED;
 
-            Object[] eventDataArr = (Object[]) eventData;
-            List<ResourceObject> resourceObjects = (List<ResourceObject>) eventDataArr[0];
+                String key = "node"+this.nodeNumber+"_key";
+                String value = "node"+this.nodeNumber+"_value";
+                this.peer.publish(key.getBytes(), new StringValueResourceObject(key, value));
 
-            boolean ok = false;
+            } else if (P2ppNode.EVENT_ONPUBLISH.equals(eventType)) {
 
-            if (!resourceObjects.isEmpty()) {
-                ResourceObject publishedResource = resourceObjects.get(0);
-                if (publishedResource instanceof StringValueResourceObject) {
-                    StringValueResourceObject svro = (StringValueResourceObject) publishedResource;
-                    String valueOk = "node"+this.nodeNumber+"_value";
-                    String valueSvro = svro.getValueAsString();
-                    if (LOG.isTraceEnabled()) LOG.trace(valueOk + " ?= " + valueSvro);
-                    if (valueOk.equals(valueSvro)) ok = true;
+                this.testState = TestState.PUBLISHED;
+
+                Object[] eventDataArr = (Object[]) eventData;
+                Byte contentType = (Byte) eventDataArr[0];
+                Byte contentSubType = (Byte) eventDataArr[1];
+                String resourceKey = new String((byte[])eventDataArr[2]);
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("onpublish: contentType=" + contentType + " contentSubType=" + contentSubType + " key=" + resourceKey);
                 }
+
+                String key = "node"+this.nodeNumber+"_key";
+                this.peer.lookup(P2PPUtils.STRING_VALUE_CONTENT_TYPE, (byte)0, key.getBytes(), null);
+
+
+            } else if (P2ppNode.EVENT_ONLOOKUP.equals(eventType)) {
+
+                Object[] eventDataArr = (Object[]) eventData;
+                List<ResourceObject> resourceObjects = (List<ResourceObject>) eventDataArr[0];
+
+                boolean ok = false;
+
+                if (!resourceObjects.isEmpty()) {
+                    ResourceObject publishedResource = resourceObjects.get(0);
+                    if (publishedResource instanceof StringValueResourceObject) {
+                        StringValueResourceObject svro = (StringValueResourceObject) publishedResource;
+                        String valueOk = "node"+this.nodeNumber+"_value";
+                        String valueSvro = svro.getValueAsString();
+                        if (LOG.isTraceEnabled()) LOG.trace(valueOk + " ?= " + valueSvro);
+                        if (valueOk.equals(valueSvro)) ok = true;
+                    }
+                }
+
+                LOG.info(this.nodeNumber + " returned correct resource: " + ok);
+
+                this.testState = TestState.LOOKEDUP;
+
             }
 
-            LOG.info(this.nodeNumber + " returned correct resource: " + ok);
 
-            this.testState = TestState.LOOKEDUP;
-
-        }
-
-
-        if (LOG.isTraceEnabled()) {
-            LOG.trace(this.nodeNumber + ": Test state after handling event: " + this.testState);
-        }
+            if (LOG.isTraceEnabled()) {
+                LOG.trace(this.nodeNumber + ": Test state after handling event: " + this.testState);
+            }
 
         } catch (Throwable e) {
             LOG.error("Error while handling event type=" + eventType, e);
         }
     }
 
-    private void snooze(long t) {
-        if (t <= 0) return;
-        try{
-            sleep(t);
-        } catch (Throwable e) {
-            LOG.error("Error while sleeping...", e);
-        }
+    public static boolean isTestFromName(String name) {
+        return "p2ppbasic".equals(name);
     }
 
+    public static int getArgsCount() {
+        return rules.getFieldsRulesCount();
+    }
 
 }
 

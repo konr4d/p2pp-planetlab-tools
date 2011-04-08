@@ -10,7 +10,7 @@
 
 ./pldep.py -m execute -a "{'command':'\"scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -r /tmp/P2PP %s@%s:\"%(ssh_user,hostname)', 'timeout':0, 'ssh_user':'pjwstkple_p2pp',}"
 
-./pldep.py -m execute -a "{'command':'\"cd pubsubtest && ./run.sh %s 12345 148.81.140.193 7080\"%i', 'timeout':0, 'ssh':True, 'ssh_user':'pjwstkple_p2pp', 'copy_id':False,}"
+./pldep.py -m execute -a "{'command':'\"cd pubsubtest && ./run.sh pubsubbasic %s 12345 148.81.140.193 7080\"%i', 'timeout':0, 'ssh':True, 'ssh_user':'pjwstkple_p2pp', 'copy_id':False,}"
 
 ./pldep.py -m execute -a "{'command':'\"killall -9 java & >/dev/null 2>&1\"', 'timeout':30, 'ssh':True, 'ssh_user':'pjwstkple_p2pp', 'copy_id':False,}"&
 

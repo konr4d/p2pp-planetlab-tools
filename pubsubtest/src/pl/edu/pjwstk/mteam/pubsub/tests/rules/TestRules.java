@@ -33,6 +33,10 @@ public class TestRules implements IRules {
         return this.fieldsRules;
     }
 
+    public int getFieldsRulesCount() {
+        return this.fieldsRules.size();
+    }
+
     public boolean verifyField(String key, Object value) {
         if (LOG.isTraceEnabled()) LOG.trace("Veryfing field key=" + key + " value=" + value);
 

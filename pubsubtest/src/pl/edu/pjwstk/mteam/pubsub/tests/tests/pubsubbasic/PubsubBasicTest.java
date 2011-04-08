@@ -65,11 +65,9 @@ public class PubsubBasicTest extends Thread implements ITest, IEventSubscriber {
         Integer port = (Integer) this.kwargs.get("port");
         String bootIP = (String) this.kwargs.get("bootIP");
         Integer bootPort = (Integer) this.kwargs.get("bootPort");
-        String serverReflexiveIP = (String) this.kwargs.get("serverReflexiveIP");
-        Integer serverReflexivePort = (Integer) this.kwargs.get("serverReflexivePort");
 
         // Creating PSNode
-        this.psNode = new PSNode("node" + nodeNumber, port, bootIP, bootPort, serverReflexiveIP, serverReflexivePort);
+        this.psNode = new PSNode("node" + nodeNumber, port, bootIP, bootPort, bootIP, bootPort);
         this.psNode.init();
 
         //snooze(30000*nodeNumber);
@@ -110,13 +108,13 @@ public class PubsubBasicTest extends Thread implements ITest, IEventSubscriber {
             this.testState = TestState.JOINED;
             this.psNode.subscribe("topicID", -1);
 
-        /*} else if (PSNode.EVENT_ONTOPICCREATE.equals(eventType)) {
+        } else if (PSNode.EVENT_ONTOPICCREATE.equals(eventType)) {
 
             if (LOG.isDebugEnabled()) {
                 LOG.debug(this.psNode.getUserId() + ": Created topic " + eventData);
             }
 
-            this.testState = TestState.CREATEDTOPIC;*/
+            this.testState = TestState.CREATEDTOPIC;
 
         } else if (PSNode.EVENT_ONTOPICSUBSCRIBE.equals(eventType)) {
 
@@ -172,6 +170,13 @@ public class PubsubBasicTest extends Thread implements ITest, IEventSubscriber {
         }
     }
 
+    public static boolean isTestFromName(String name) {
+        return "pubsubbasic".equals(name);
+    }
+
+    public static int getArgsCount() {
+        return rules.getFieldsRulesCount();
+    }
 
 }
 
