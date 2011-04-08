@@ -30,10 +30,12 @@ public class P2ppNodeCallback implements P2PPNodeCallback {
 
     public void lookupCallback(Vector<ResourceObject> resourceObjects) {
         LOG.info("lookupCallback invoked resourceObjects=" + resourceObjects);
+        EventManager.getInstance().addEventToQueue(P2ppNode.EVENT_ONLOOKUP, new Object[]{resourceObjects});
     }
 
     public boolean onDeliverRequest(Request req, List<ResourceObject> objectList) {
         LOG.info("onDeliverRequest invoked req=" + req + " objectList=" + objectList);
+        EventManager.getInstance().addEventToQueue(P2ppNode.EVENT_ONLOOKUP, new Object[]{objectList});
         return objectList != null;
     }
 
