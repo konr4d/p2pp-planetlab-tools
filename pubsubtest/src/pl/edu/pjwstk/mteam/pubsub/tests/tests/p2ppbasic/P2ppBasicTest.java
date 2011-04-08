@@ -81,8 +81,6 @@ public class P2ppBasicTest extends Thread implements ITest, IEventSubscriber {
         Integer port = (Integer) this.kwargs.get("port");
         String bootIP = (String) this.kwargs.get("bootIP");
         Integer bootPort = (Integer) this.kwargs.get("bootPort");
-        /*String serverReflexiveIP = (String) this.kwargs.get("serverReflexiveIP");
-        Integer serverReflexivePort = (Integer) this.kwargs.get("serverReflexivePort");*/
         String overlayId = (String) this.kwargs.get("overlayId");
         byte[] overlayIdBytes = overlayId.getBytes();
 
