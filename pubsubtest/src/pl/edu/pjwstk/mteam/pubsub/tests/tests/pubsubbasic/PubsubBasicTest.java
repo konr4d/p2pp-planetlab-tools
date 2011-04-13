@@ -39,7 +39,7 @@ public class PubsubBasicTest extends Thread implements ITest, IEventSubscriber {
             if (kwargValue == null) {
                 StringBuilder strb = new StringBuilder("PubsubBasicTest must be given a \"");
                 strb.append(fieldName).append("\" kwarg.");
-                if (LOG.isDebugEnabled()) {
+                if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
                     strb.append(" Required kwargs: ").append(fieldRules.values());
                 }
                 LOG.error(strb.toString());

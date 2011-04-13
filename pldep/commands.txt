@@ -15,3 +15,5 @@
 ./pldep.py -m execute -a "{'command':'\"killall -9 java & >/dev/null 2>&1\"', 'timeout':30, 'ssh':True, 'ssh_user':'pjwstkple_p2pp', 'copy_id':False,}"&
 
 ./pldep.py -m execute -a "{'command':'\"rm pubsubtest/logs/* & >/dev/null 2>&1\"', 'timeout':0, 'ssh':True, 'ssh_user':'pjwstkple_p2pp', 'copy_id':False,}"&
+
+./pldep.py -m execute -a "{'command':'\"cd pubsubtest && ./run.sh p2ppbasic %s 11245 148.81.140.193 7080 oid\"%i', 'timeout':0, 'ssh':True, 'ssh_user':'pjwstkple_p2pp', 'copy_id':False,}"

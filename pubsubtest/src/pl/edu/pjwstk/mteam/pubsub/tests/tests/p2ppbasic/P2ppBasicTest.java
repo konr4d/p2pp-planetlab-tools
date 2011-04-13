@@ -7,6 +7,7 @@ import pl.edu.pjwstk.mteam.pubsub.tests.p2ppnode.P2ppNode;
 import pl.edu.pjwstk.mteam.pubsub.tests.p2ppnode.P2ppNodeCallback;
 import pl.edu.pjwstk.mteam.pubsub.tests.rules.FieldRule;
 import pl.edu.pjwstk.mteam.pubsub.tests.tests.ITest;
+import pl.edu.pjwstk.p2pp.ErrorInterface;
 import pl.edu.pjwstk.p2pp.P2PPManager;
 import pl.edu.pjwstk.p2pp.entities.Peer;
 import pl.edu.pjwstk.p2pp.ice.STUNService;
@@ -28,7 +29,7 @@ public class P2ppBasicTest extends Thread implements ITest, IEventSubscriber {
     public static final Logger LOG = Logger.getLogger(P2ppBasicTest.class);
 
     private static final P2ppBasicTestRules rules = new P2ppBasicTestRules();
-    private static final String[] acceptedEvents = {P2ppNode.EVENT_ONJOIN,P2ppNode.EVENT_ONLOOKUP,P2ppNode.EVENT_ONPUBLISH};
+    private static final String[] acceptedEvents = {P2ppNode.EVENT_ONERROR,P2ppNode.EVENT_ONJOIN,P2ppNode.EVENT_ONLOOKUP,P2ppNode.EVENT_ONPUBLISH};
 
     private Map<String,Object> kwargs;
 
@@ -55,7 +56,7 @@ public class P2ppBasicTest extends Thread implements ITest, IEventSubscriber {
             if (kwargValue == null) {
                 StringBuilder strb = new StringBuilder("P2ppBasicTest must be given a \"");
                 strb.append(fieldName).append("\" kwarg.");
-                if (LOG.isDebugEnabled()) {
+                if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
                     strb.append(" Required kwargs: ").append(fieldRules.values());
                 }
                 LOG.error(strb.toString());
@@ -119,8 +120,19 @@ public class P2ppBasicTest extends Thread implements ITest, IEventSubscriber {
                 LOG.trace(this.nodeNumber + ": Handling event type=" + eventType + " data=" + eventData);
             }
 
+            if (P2ppNode.EVENT_ONERROR.equals(eventType)) {
 
-            if (P2ppNode.EVENT_ONJOIN.equals(eventType)) {
+                Object[] eventDataArr = (Object[]) eventData;
+                ErrorInterface errorInterface = (ErrorInterface) eventDataArr[0];
+                Integer errorCode = (Integer) eventDataArr[1];
+
+                if (LOG.isDebugEnabled()) {
+                    StringBuilder strb = new StringBuilder("onerror code=");
+                    strb.append(errorCode).append(" value=").append(errorInterface.getValue());
+                    LOG.debug(strb.toString());
+                }
+
+            } else if (P2ppNode.EVENT_ONJOIN.equals(eventType)) {
 
                 this.testState = TestState.JOINED;
 

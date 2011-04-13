@@ -98,6 +98,7 @@ public class P2ppNodeCallback implements P2PPNodeCallback {
                 //nodeCallback.onOverlayError(self, null, errorCode);
                 break;
         }*/
+        EventManager.getInstance().addEventToQueue(P2ppNode.EVENT_ONERROR, new Object[]{errorObject, errorCode});
     }
 
     @Override
