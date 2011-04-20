@@ -11,6 +11,7 @@ import pl.edu.pjwstk.p2pp.ErrorInterface;
 import pl.edu.pjwstk.p2pp.P2PPManager;
 import pl.edu.pjwstk.p2pp.entities.Peer;
 import pl.edu.pjwstk.p2pp.ice.STUNService;
+import pl.edu.pjwstk.p2pp.kademlia.KademliaPeer;
 import pl.edu.pjwstk.p2pp.objects.AddressInfo;
 import pl.edu.pjwstk.p2pp.objects.P2POptions;
 import pl.edu.pjwstk.p2pp.objects.ResourceObject;
@@ -74,7 +75,7 @@ public class P2ppBasicTest extends Thread implements ITest, IEventSubscriber {
     public boolean test() {
 
         if (!verifyKwargs()) {
-            LOG.error("BasicTest cannot run with given arguments: " + this.kwargs);
+            LOG.error("P2ppBasicTest cannot run with given arguments: " + this.kwargs);
             return false;
         }
 
@@ -84,11 +85,36 @@ public class P2ppBasicTest extends Thread implements ITest, IEventSubscriber {
         Integer bootPort = (Integer) this.kwargs.get("bootPort");
         String overlayId = (String) this.kwargs.get("overlayId");
         byte[] overlayIdBytes = overlayId.getBytes();
+        String transport = (String) this.kwargs.get("transport");
+        String protocol = (String) this.kwargs.get("protocol");
 
-        this.p2ppManager = new P2PPManager(port, -1, -1, -1, -1, "", "", new P2PPMessageFactory(), ("node"+this.nodeNumber).getBytes());
-        this.p2ppManager.setOptions(new P2POptions(P2PPUtils.SHA1_HASH_ALGORITHM, (byte)20, P2PPUtils.SUPERPEER_P2P_ALGORITHM, (byte)2, overlayIdBytes));
-        this.peer = new SuperPeerPeer();
-        this.peer.addService(new STUNService(true, AddressInfo.TCP_TRANSPORT_TYPE));
+        StringBuilder strb = new StringBuilder("Starting P2ppBasicTest port=");
+        strb.append(port).append(" bootIP=").append(bootIP).append(" bootPort=").append(bootPort).append(" overlayID=").append(overlayId);
+        strb.append(" transport=").append(transport).append(" protocol=").append(protocol);
+        LOG.info(strb.toString());
+
+        boolean[] transportBools;
+        if ("udp".equals(transport)) {
+            transportBools = AddressInfo.UDP_TRANSPORT_TYPE;
+            this.p2ppManager = new P2PPManager(-1, port, -1, -1, -1, "", "", new P2PPMessageFactory(), ("node"+this.nodeNumber).getBytes());
+        } else {
+            transportBools = AddressInfo.TCP_TRANSPORT_TYPE;
+            this.p2ppManager = new P2PPManager(port, -1, -1, -1, -1, "", "", new P2PPMessageFactory(), ("node"+this.nodeNumber).getBytes());
+        }
+
+        byte protocolByte;
+        if ("kademlia".equals(protocol)) {
+            protocolByte = P2PPUtils.KADEMLIA_P2P_ALGORITHM;
+        } else {
+            protocolByte = P2PPUtils.SUPERPEER_P2P_ALGORITHM;
+        }
+
+        STUNService.serverReflexiveAddress = bootIP;
+        STUNService.serverReflexivePort = bootPort;
+
+        this.p2ppManager.setOptions(new P2POptions(P2PPUtils.SHA1_HASH_ALGORITHM, (byte)20, protocolByte, (byte)2, overlayIdBytes));
+        this.peer = (protocolByte==P2PPUtils.KADEMLIA_P2P_ALGORITHM) ? new KademliaPeer() : new SuperPeerPeer();
+        this.peer.addService(new STUNService(true, transportBools));
         this.peer.setCallback(new P2ppNodeCallback());
         this.p2ppManager.addEntity(peer);
 

@@ -18,8 +18,8 @@ public class EventManager extends Thread {
         _instance.start();
     }
 
-    private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(10, 10, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
-            new NamedThreadFactory("EventManagerPool"));
+    private final ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(10, 10, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());//,
+    //        new NamedThreadFactory("EventManagerPool"));
 
     private final PriorityBlockingQueue<EventContainer> eventsQueue = new PriorityBlockingQueue<EventContainer>(50);
 

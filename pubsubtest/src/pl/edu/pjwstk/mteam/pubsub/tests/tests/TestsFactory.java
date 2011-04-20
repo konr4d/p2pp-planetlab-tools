@@ -31,6 +31,8 @@ public class TestsFactory {
                 put("bootIP", args[3]);
                 put("bootPort", Integer.parseInt(args[4]));
                 put("overlayId", args[5]);
+                put("transport", args[6]);
+                put("protocol", args[7]);
             }};
 
             test = new P2ppBasicTest(kwargs);

@@ -14,7 +14,8 @@ public class P2ppBasicTestRules extends TestRules {
             put("bootIP", new FieldRule("bootIP", "Bootstrap server's IP address", String.class));
             put("bootPort", new FieldRule("bootPort", "Bootstrap server's port", Integer.class));
             put("overlayId", new FieldRule("overlayId", "Overlay ID", String.class));
-
+            put("transport", new FieldRule("transport", "{tcp|udp}", String.class));
+            put("protocol", new FieldRule("protocol", "P2P protocol: {kademlia|superpeer}", String.class));
         }});
     }
 

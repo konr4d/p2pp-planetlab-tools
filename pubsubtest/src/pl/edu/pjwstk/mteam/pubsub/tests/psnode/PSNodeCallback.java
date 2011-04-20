@@ -18,7 +18,7 @@ public class PSNodeCallback implements NodeCallback {
     }
 
     public void onOverlayError(Node node, Object sourceID, int errorCode) {
-        LOG.info("OnOverlayError invoked.....");
+        LOG.info("OnOverlayError invoked node=" + node + " sourceID=" + sourceID + " errorCode=" + errorCode);
     }
 
     public void onJoin(Node node) {
@@ -101,23 +101,19 @@ public class PSNodeCallback implements NodeCallback {
 
     }
 
-
     public void onPubSubError(Node node, Object topicID, byte operationType, int errorCode, int arg4) {
         LOG.info("OnPubSubError for topic '" + topicID + "' callback invoked");
     }
-
 
     public void onTopicCreate(Node node, Object topicID, int arg2) {
         LOG.info("onTopicCreate for topic '" + topicID + "' callback invoked (" + arg2 + ")");
         EventManager.getInstance().addEventToQueue(PSNode.EVENT_ONTOPICCREATE, topicID);
     }
 
-
     public void onTopicNotify(Node node, Object topicID, byte[] message, boolean arg3) {
         LOG.info("onTopicNotify for topic '" + topicID + "' callback invoked (" + arg3 + ")");
         EventManager.getInstance().addEventToQueue(PSNode.EVENT_ONTOPICNOTIFY, new Object[]{topicID,message,arg3});
     }
-
 
     public void onTopicSubscribe(Node node, Object topicID, int arg2) {
         LOG.info("onTopicSubscribe for topic '" + topicID + "' callback invoked (" + arg2 + ")");
